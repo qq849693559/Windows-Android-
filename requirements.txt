@@ -1,0 +1,6 @@
+# Python应用依赖
+pyinstaller>=5.0.0
+pyqt6>=6.5.0
+pyqtdeploy>=3.2.0
+setuptools>=65.0.0
+wheel>=0.40.0

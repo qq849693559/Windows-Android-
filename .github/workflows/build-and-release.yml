@@ -1,0 +1,139 @@
+name: Build and Release Python App
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  release:
+    types: [published]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Build Windows EXE
+      run: |
+        pip install pyinstaller
+        pyinstaller --onefile --windowed --name=app.exe app.py
+        
+    - name: Create Windows ZIP package
+      run: |
+        mkdir -p dist/windows
+        cp dist/app.exe dist/windows/
+        cd dist/windows
+        7z a ../windows-app.zip app.exe
+        
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-artifacts
+        path: |
+          dist/app.exe
+          dist/windows-app.zip
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Build Android APK using Pyqtdeploy
+      run: |
+        # 安装Android构建工具
+        sudo apt-get update
+        sudo apt-get install -y android-tools-adb android-tools-fastboot
+        
+        # 安装PyQt6和构建工具
+        pip install pyqt6 pyqtdeploy
+        
+        # 创建Android项目
+        mkdir -p android_build
+        cd android_build
+        pyqtdeploy-build --project ../android-project.pdy --package com.example.app
+        
+    - name: Create Android ZIP package
+      run: |
+        mkdir -p dist/android
+        cp android_build/*.apk dist/android/
+        cd dist/android
+        7z a ../android-app.zip *.apk
+        
+    - name: Upload Android artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: android-artifacts
+        path: |
+          android_build/*.apk
+          dist/android-app.zip
+
+  create-zip-package:
+    needs: [build-windows, build-android]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Create complete ZIP package
+      run: |
+        mkdir -p complete-package
+        cp windows-app.zip complete-package/windows-app.zip
+        cp android-app.zip complete-package/android-app.zip
+        cd complete-package
+        7z a ../complete-app.zip *
+        
+    - name: Upload complete package
+      uses: actions/upload-artifact@v3
+      with:
+        name: complete-package
+        path: complete-app.zip
+
+  release:
+    needs: [build-windows, build-android, create-zip-package]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Upload to GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          windows-app.zip
+          android-app.zip
+          complete-app.zip
+        tag_name: ${{ github.ref }}
+        name: Release ${{ github.ref_name }}
+        body: |
+          ## 自动构建版本
+          - Windows版本: windows-app.zip
+          - Android版本: android-app.zip
+          - 完整包: complete-app.zip
+          
+          构建时间: ${{ github.event.created_at }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

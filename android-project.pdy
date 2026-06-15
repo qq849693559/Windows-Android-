@@ -1,0 +1,22 @@
+{
+    "application_package": "com.example.app",
+    "application_name": "PythonApp",
+    "version": "1.0.0",
+    "icon": "icon.png",
+    "main_script": "app.py",
+    "requirements": [
+        "PyQt6",
+        "PyQt6-Qt6"
+    ],
+    "android": {
+        "min_sdk_version": 21,
+        "target_sdk_version": 33,
+        "package_name": "com.example.pythonapp",
+        "activity_name": "MainActivity",
+        "permissions": [
+            "INTERNET",
+            "WRITE_EXTERNAL_STORAGE",
+            "READ_EXTERNAL_STORAGE"
+        ]
+    }
+}
