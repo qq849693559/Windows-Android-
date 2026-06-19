@@ -82,7 +82,25 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y p7zip-full gradle
+        sudo apt-get install -y p7zip-full wget unzip
+
+    - name: Install Gradle 8.5
+      run: |
+        wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip
+        unzip -q gradle-8.5-bin.zip
+        echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
+        echo "GRADLE_HOME=$PWD/gradle-8.5" >> $GITHUB_ENV
+
+    - name: Verify Android SDK & Gradle
+      run: |
+        echo "=== Environment Check ==="
+        echo "ANDROID_HOME: $ANDROID_HOME"
+        echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+        echo "JAVA_HOME: $JAVA_HOME"
+        ls -la "$ANDROID_HOME" 2>/dev/null || echo "ANDROID_HOME not found"
+        ls -la "$ANDROID_SDK_ROOT" 2>/dev/null || echo "ANDROID_SDK_ROOT not found"
+        gradle --version
+        java -version
 
     - name: Install Python dependencies
       run: |

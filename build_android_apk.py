@@ -444,14 +444,25 @@ public class {activity} extends AppCompatActivity {{
             print(f"  [INFO] PyQtDeploy 未就绪: {e}")
 
     def _write_local_properties(self):
-        """生成 local.properties，指向 Android SDK"""
-        sdk_root = os.environ.get("ANDROID_SDK_ROOT") or os.environ.get("ANDROID_HOME")
-        if sdk_root:
-            content = f"sdk.dir={sdk_root}\n"
-            (self.build_dir / "local.properties").write_text(content, encoding="utf-8")
-            print(f"  local.properties 已生成 -> sdk.dir={sdk_root}")
-        else:
-            print("  [WARNING] 未找到 ANDROID_SDK_ROOT 或 ANDROID_HOME 环境变量")
+        """生成 local.properties 文件，指向 Android SDK"""
+        sdk_root = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
+        
+        # 兜底：尝试 GitHub Actions runner 上的常见路径
+        if not sdk_root or not Path(sdk_root).exists():
+            fallback_paths = [
+                "/usr/local/lib/android/sdk",            # Linux runner
+                "/Users/runner/Library/Android/sdk",     # macOS runner
+                "C:\\Users\\runneradmin\\AppData\\Local\\Android\\Sdk",  # Windows runner
+            ]
+            for p in fallback_paths:
+                if Path(p).exists():
+                    sdk_root = p
+                    break
+        
+        sdk_root_str = str(sdk_root) if sdk_root else ""
+        content = f"sdk.dir={sdk_root_str}\n"
+        (self.build_dir / "local.properties").write_text(content, encoding="utf-8")
+        print(f"  写入 local.properties: sdk.dir={sdk_root_str}")
 
     def _generate_icon(self, output_path):
         """生成最小有效 PNG 图标（48x48 蓝色方块），无需任何图片库依赖"""
@@ -533,7 +544,7 @@ exec gradle "$@"
         # 清理并构建
         print("\n清理旧构建...")
         result = subprocess.run(
-            gradle_cmd + ["clean"],
+            gradle_cmd + ["clean", "--stacktrace"],
             cwd=str(self.build_dir),
             capture_output=True, text=True,
             timeout=120
@@ -545,7 +556,7 @@ exec gradle "$@"
 
         print("\n开始编译 APK (debug)...")
         result = subprocess.run(
-            gradle_cmd + ["assembleDebug"],
+            gradle_cmd + ["assembleDebug", "--stacktrace", "--no-daemon"],
             cwd=str(self.build_dir),
             capture_output=True, text=True,
             timeout=600
