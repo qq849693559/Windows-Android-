@@ -31,7 +31,14 @@ jobs:
     - name: Build Windows EXE
       shell: pwsh
       run: |
-        pyinstaller --onefile --windowed --name=MusicPlayer "源码/music_player.py"
+        pyinstaller --onefile --windowed --name=MusicPlayer `
+          --hidden-import=PyQt6.QtCore `
+          --hidden-import=PyQt6.QtGui `
+          --hidden-import=PyQt6.QtWidgets `
+          --hidden-import=PyQt6.QtMultimedia `
+          --hidden-import=PyQt6.QtMultimediaWidgets `
+          --hidden-import=PyQt6.QtNetwork `
+          "源码/music_player.py"
         
     - name: Create Windows release package
       shell: pwsh

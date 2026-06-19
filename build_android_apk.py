@@ -123,6 +123,9 @@ class AndroidAPKBuilder:
         (res_path / "layout").mkdir(parents=True, exist_ok=True)
         (res_path / "mipmap-hdpi").mkdir(parents=True, exist_ok=True)
 
+        # 生成占位应用图标（最小有效 PNG）
+        self._generate_icon(res_path / "mipmap-hdpi" / "ic_launcher.png")
+
         # ---- Gradle 文件 ----
         self._write_settings_gradle(pkg, app_name)
         self._write_root_build_gradle()
@@ -433,6 +436,41 @@ public class {activity} extends AppCompatActivity {{
         except Exception as e:
             print(f"  [INFO] PyQtDeploy 未就绪: {e}")
 
+    def _write_local_properties(self):
+        """生成 local.properties，指向 Android SDK"""
+        sdk_root = os.environ.get("ANDROID_SDK_ROOT") or os.environ.get("ANDROID_HOME")
+        if sdk_root:
+            content = f"sdk.dir={sdk_root}\n"
+            (self.build_dir / "local.properties").write_text(content, encoding="utf-8")
+            print(f"  local.properties 已生成 -> sdk.dir={sdk_root}")
+        else:
+            print("  [WARNING] 未找到 ANDROID_SDK_ROOT 或 ANDROID_HOME 环境变量")
+
+    def _generate_icon(self, output_path):
+        """生成最小有效 PNG 图标（48x48 蓝色方块），无需任何图片库依赖"""
+        import struct, zlib
+
+        def chunk(chunk_type, data):
+            c = chunk_type + data
+            crc = struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+            return struct.pack(">I", len(data)) + c + crc
+
+        width, height = 48, 48
+        # 生成蓝色像素行
+        raw = b""
+        for y in range(height):
+            raw += b"\x00"  # filter byte
+            for x in range(width):
+                raw += b"\x1a\x6b\xd4\xff"  # RGBA 蓝色
+
+        png = b"\x89PNG\r\n\x1a\n"
+        png += chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0))
+        png += chunk(b"IDAT", zlib.compress(raw))
+        png += chunk(b"IEND", b"")
+
+        output_path.write_bytes(png)
+        print(f"  生成占位图标: {output_path.name}")
+
     def generate_gradle_wrapper(self):
         """生成 Gradle Wrapper"""
         wrapper_dir = self.build_dir / "gradle" / "wrapper"
@@ -476,6 +514,9 @@ exec gradle "$@"
         """使用 Gradle 编译 APK"""
         print("\n" + "=" * 50)
         print("使用 Gradle 编译 APK...")
+
+        # 生成 local.properties，确保 Gradle 能找到 Android SDK
+        self._write_local_properties()
 
         self.generate_gradle_wrapper()
 
