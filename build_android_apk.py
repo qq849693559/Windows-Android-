@@ -26,6 +26,13 @@ class AndroidAPKBuilder:
         """检查构建依赖，返回 (ok, warnings)"""
         print("=" * 50)
         print("检查构建依赖...")
+        print(f"  工作目录: {os.getcwd()}")
+        
+        # 打印关键环境变量
+        for key in ["ANDROID_HOME", "ANDROID_SDK_ROOT", "ANDROID_NDK_HOME", "JAVA_HOME", "HOME"]:
+            val = os.environ.get(key, "(未设置)")
+            print(f"  ENV {key}: {val}")
+            
         warnings = []
 
         # Python环境
@@ -531,8 +538,10 @@ exec gradle "$@"
             capture_output=True, text=True,
             timeout=120
         )
-        if result.returncode != 0:
-            print(f"  清理警告: {result.stderr[-300:]}")
+        if result.stdout:
+            print("STDOUT:", result.stdout[-1000:])
+        if result.stderr:
+            print("STDERR:", result.stderr[-1000:])
 
         print("\n开始编译 APK (debug)...")
         result = subprocess.run(
@@ -542,7 +551,13 @@ exec gradle "$@"
             timeout=600
         )
 
-        print(result.stdout[-2000:] if len(result.stdout) > 2000 else result.stdout)
+        # 输出完整日志便于排查
+        if result.stdout:
+            print("=== Gradle STDOUT ===")
+            print(result.stdout)
+        if result.stderr:
+            print("=== Gradle STDERR ===")
+            print(result.stderr)
 
         if result.returncode == 0:
             # 查找生成的 APK

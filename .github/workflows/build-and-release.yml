@@ -32,20 +32,15 @@ jobs:
       shell: pwsh
       run: |
         pyinstaller --onefile --windowed --name=MusicPlayer `
-          --hidden-import=PyQt6.QtCore `
-          --hidden-import=PyQt6.QtGui `
-          --hidden-import=PyQt6.QtWidgets `
-          --hidden-import=PyQt6.QtMultimedia `
-          --hidden-import=PyQt6.QtMultimediaWidgets `
-          --hidden-import=PyQt6.QtNetwork `
+          --collect-all PyQt6 --collect-all PyQt6.QtMultimedia `
           "源码/music_player.py"
         
     - name: Create Windows release package
       shell: pwsh
       run: |
-        New-Item -ItemType Directory -Force -Path dist\windows-package | Out-Null
+        New-Item -ItemType Directory -Force -Path dist\windows-package\源码 | Out-Null
         Copy-Item "dist\MusicPlayer.exe" -Destination "dist\windows-package\"
-        Copy-Item "源码\music_player.py" -Destination "dist\windows-package\源码\"
+        Copy-Item "源码\music_player.py" -Destination "dist\windows-package\源码\music_player.py"
         Copy-Item "music_player_requirements.txt" -Destination "dist\windows-package\"
         Compress-Archive -Path "dist\windows-package\*" -DestinationPath "dist\MusicPlayer-Windows.zip"
         
