@@ -66,17 +66,27 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        packages: 'platforms;android-33 build-tools;33.0.3 platform-tools cmdline-tools;latest'
+
+    - name: Set environment variables
+      run: |
+        echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+        echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y p7zip-full
-        
+        sudo apt-get install -y p7zip-full gradle
+
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pyqt6 pyqtdeploy pyinstaller
-        
+
     - name: Build Android APK
       run: |
         python build_android_apk.py
