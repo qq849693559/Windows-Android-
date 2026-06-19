@@ -1,0 +1,28 @@
+# 构建产物
+build/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+*.spec
+*.zip
+*.rar
+*.exe
+*.tmp
+
+# 发布包
+MusicPlayer_Release_Package/
+音乐播放器-发布包/
+新建文件夹/
+
+# 临时文件
+tmp_*.py
+
+# IDE
+.vscode/
+.idea/
+
+# 环境
+venv/
+env/
+.venv/

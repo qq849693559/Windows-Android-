@@ -1,0 +1,36 @@
+{
+    "application_package": "com.example.musicplayer",
+    "application_name": "音乐播放器",
+    "version": "1.0.0",
+    "icon": "icon.png",
+    "main_script": "music_player.py",
+    "requirements": [
+        "PyQt6",
+        "PyQt6-Qt6",
+        "PyQt6-Multimedia"
+    ],
+    "android": {
+        "min_sdk_version": 21,
+        "target_sdk_version": 33,
+        "package_name": "com.example.musicplayer",
+        "activity_name": "MainActivity",
+        "permissions": [
+            "INTERNET",
+            "WRITE_EXTERNAL_STORAGE",
+            "READ_EXTERNAL_STORAGE",
+            "READ_MEDIA_AUDIO"
+        ],
+        "features": [
+            "android.hardware.audio.output",
+            "android.hardware.touchscreen"
+        ]
+    },
+    "build": {
+        "android_sdk_path": "/path/to/android-sdk",
+        "android_ndk_path": "/path/to/android-ndk",
+        "keystore_path": "/path/to/keystore.jks",
+        "keystore_password": "your_keystore_password",
+        "key_alias": "your_key_alias",
+        "key_password": "your_key_password"
+    }
+}
